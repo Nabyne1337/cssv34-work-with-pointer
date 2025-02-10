@@ -15,7 +15,7 @@ uintptr_t ModuleBase;
 uintptr_t PlayerBase;
 
 int m_iHealth = 0;
-int value_fow = 1;
+
 uintptr_t GetModuleBaseAddress(const wchar_t* modName) {
     HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, procID);
     if (hSnap != INVALID_HANDLE_VALUE) {
@@ -46,43 +46,23 @@ uintptr_t FindDMAAddy(HANDLE hProc, uintptr_t ptr, std::vector<unsigned int> off
 }
 
 void Health_monitor() {
-    uintptr_t dynamicptrbaseaddr = PlayerBase + 0x40CDB68;
-    std::vector<unsigned int> speedoffset = { 0x0, 0x2D0 };
+    uintptr_t dynamicptrbaseaddr = ModuleBase + 0x004035C0;
+    std::vector<unsigned int> speedoffset = { 0x5C };
 
     uintptr_t myAddr = FindDMAAddy(hProcess, dynamicptrbaseaddr, speedoffset);
 
     ReadProcessMemory(hProcess, (LPVOID)myAddr, &m_iHealth, sizeof(m_iHealth), 0);
     /*WriteProcessMemory(hProcess, (LPVOID)myAddr, &speed, sizeof(speed), 0);*/
-    std::cout << "Health hero - sniper: " << m_iHealth << std::endl;
-}
-
-void Camera_Hack(float camera) {
-    uintptr_t dynamicptrbaseaddr = ModuleBase + 0x50447e0;
-    std::vector<unsigned int> speedoffset = { 0x28 };
-
-    uintptr_t myAddr = FindDMAAddy(hProcess, dynamicptrbaseaddr, speedoffset);
-
-    WriteProcessMemory(hProcess, (LPVOID)myAddr, &camera, sizeof(camera), 0);
-    std::cout << "Camera: " << camera << std::endl;
-}
-
-void fow_Hack() {
-    uintptr_t dynamicptrbaseaddr = ModuleBase + 0x5026C68;
-    std::vector<unsigned int> speedoffset = { 0x40 };
-
-    uintptr_t myAddr = FindDMAAddy(hProcess, dynamicptrbaseaddr, speedoffset);
-
-    WriteProcessMemory(hProcess, (LPVOID)myAddr, &value_fow, sizeof(value_fow), 0);
-    std::cout << "fow: " << value_fow << std::endl;
+    std::cout << "Health: " << m_iHealth << std::endl;
 }
 
 int main() {
 
     SetConsoleTitle(L"onetap v2");
 
-    hwnd = FindWindow(NULL, L"Dota 2");
+    hwnd = FindWindow(NULL, L"Counter-Strike Source");
     if (hwnd == NULL) {
-        cout << "[-] Please Open the Dota 2" << endl;
+        cout << "[-] Please Open the CSS V34" << endl;
         Sleep(1000);
         return 0;
     }
@@ -94,18 +74,17 @@ int main() {
         cout << "\n\n [-] Process ID not Found" << endl;
         return 0;
     }
-    float distance_cam = 0;
+
     ModuleBase = GetModuleBaseAddress(L"client.dll");
     PlayerBase = GetModuleBaseAddress(L"server.dll");
     hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, procID);
-    cout << "\n\n [+] Process dota2.exe is Opened" << endl;
-    cout << "\n\n Press enter..." << endl; _getch();
-    cout << "Camera distance: "; cin >> distance_cam;
+    cout << "\n\n [+] Process hl2.exe is Opened" << endl;
+    cout << "\n\n Press enter..." << endl;
+    _getch();
+
     while (true) {
         system("cls");
         Health_monitor();
-        Camera_Hack(distance_cam);
-        fow_Hack();
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
