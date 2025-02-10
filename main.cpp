@@ -15,6 +15,7 @@ uintptr_t ModuleBase;
 uintptr_t PlayerBase;
 
 int m_iHealth = 0;
+bool cheatActive = false;
 
 uintptr_t GetModuleBaseAddress(const wchar_t* modName) {
     HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, procID);
@@ -34,7 +35,7 @@ uintptr_t GetModuleBaseAddress(const wchar_t* modName) {
     return 0;
 }
 
-uintptr_t FindDMAAddy(HANDLE hProc, uintptr_t ptr, std::vector<unsigned int> offsets)
+uintptr_t FindDMAAddy(HANDLE hProc, uintptr_t ptr, vector<unsigned int> offsets)
 {
     uintptr_t addr = ptr;
     for (unsigned int i = 0; i < offsets.size(); ++i)
@@ -47,17 +48,20 @@ uintptr_t FindDMAAddy(HANDLE hProc, uintptr_t ptr, std::vector<unsigned int> off
 
 void Health_monitor() {
     uintptr_t dynamicptrbaseaddr = ModuleBase + 0x004035C0;
-    std::vector<unsigned int> speedoffset = { 0x5C };
-
-    uintptr_t myAddr = FindDMAAddy(hProcess, dynamicptrbaseaddr, speedoffset);
-
+    vector<unsigned int> offsets = { 0x5C };
+    uintptr_t myAddr = FindDMAAddy(hProcess, dynamicptrbaseaddr, offsets);
     ReadProcessMemory(hProcess, (LPVOID)myAddr, &m_iHealth, sizeof(m_iHealth), 0);
-    /*WriteProcessMemory(hProcess, (LPVOID)myAddr, &speed, sizeof(speed), 0);*/
-    std::cout << "Health: " << m_iHealth << std::endl;
+    cout << "HP: " << m_iHealth << endl;
+}
+
+void ToggleCheat() {
+    cheatActive = !cheatActive;
+    int cheatValue = cheatActive ? 2 : 1;
+    uintptr_t cheatAddress = ModuleBase + 0x3B0C9C;
+    WriteProcessMemory(hProcess, (LPVOID)cheatAddress, &cheatValue, sizeof(cheatValue), 0);
 }
 
 int main() {
-
     SetConsoleTitle(L"onetap v2");
 
     hwnd = FindWindow(NULL, L"Counter-Strike Source");
@@ -69,7 +73,6 @@ int main() {
 
     procID = 0;
     GetWindowThreadProcessId(hwnd, &procID);
-
     if (procID == 0) {
         cout << "\n\n [-] Process ID not Found" << endl;
         return 0;
@@ -83,12 +86,16 @@ int main() {
     _getch();
 
     while (true) {
+        if (GetAsyncKeyState(VK_F3) & 1) {
+            ToggleCheat();
+            this_thread::sleep_for(chrono::milliseconds(150));
+        }
         system("cls");
         Health_monitor();
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        cout << "Status: " << (cheatActive ? "Enable" : "Disable") << endl;
+        this_thread::sleep_for(chrono::milliseconds(100));
     }
 
     _getch();
     return 0;
-
 }
